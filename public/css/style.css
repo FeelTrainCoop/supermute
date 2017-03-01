@@ -1,0 +1,49 @@
+body {
+  margin: 0px;
+  font-family: serif;
+  font-size: 20px;
+}
+
+.hide {
+  display: none;
+}
+
+.centered {
+  text-align: center;
+}
+
+.mutedList {
+  margin-left: 40px;
+}
+
+.wrap-left {
+ float: left;
+ margin-right: 20px;
+}
+
+#login > button {
+  font-size: 1.3em;
+}
+
+#info {
+  max-width:800px;
+}
+
+li {
+  margin-bottom: 10px;
+}
+form {
+  margin-right: 20px;
+}
+#phrase {
+  font-size: 1.05em;
+}
+#hours {
+  font-size: 1.05em;
+}
+.mute {
+  margin: 5px;
+}
+#supermute {
+  font-size: 1.5em;
+}
