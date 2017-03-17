@@ -1,13 +1,10 @@
 'use strict';
-var fs = require('fs');
 var _ = require('underscore');
 var express = require('express'),
 	controllers = require(__dirname + '/lib/controllers'),
-	config = require(__dirname + '/lib/config'),
   Stream = require(__dirname + '/lib/classes/stream').Stream,
   secret = require(__dirname + '/lib/secret');
 var redis = require('redis'), client = redis.createClient(process.env.REDIS_URL || 6379);
-var Twit = require('twit');
 var conf = {
   consumer_key: process.env.CONSUMER_KEY || secret.consumer_key,
   consumer_secret: process.env.CONSUMER_SECRET || secret.consumer_secret,
@@ -15,10 +12,6 @@ var conf = {
   access_token_secret: process.env.ACCESS_TOKEN_SECRET || secret.access_token_secret,
 };
 var callback_url = process.env.CALLBACK_URL || secret.callback_url;
-
-var globalT = new Twit(conf);
-var keywords = [],
-    replies = [];
 
 var app = express();
 app.use(express.static('public'));
@@ -77,7 +70,7 @@ function unmute(id, supermute) {
     for (let mutedUser of supermute.mutedUsers) {
       setTimeout(function() {
         console.log('now unmuting', mutedUser);
-        stream.T.post('mutes/users/destroy', { screen_name: mutedUser }, (err, data, response) => {
+        stream.T.post('mutes/users/destroy', { screen_name: mutedUser }, (err) => {
           // if there's no error, or if the error is we've already unmuted them, remove the user from the mute list in the database!
           if (!err || +err.code === 272) {
             // we unmuted!
@@ -107,9 +100,7 @@ function updateExpirations() {
         // remove any records that are muting no users (all unmuted)
         userdata.supermutes = userdata.supermutes
           .filter(supermute => ((supermute.mutedUsers.length > 0) || !supermute.isExpired));
-        client.hset(`supermute-users`, id_str, JSON.stringify(userdata), (err, resp) => {
-          // do nothing
-        });
+        client.hset(`supermute-users`, id_str, JSON.stringify(userdata), redis.print);
 
         // go through the rest and unmute as needed
         for (var supermute of userdata.supermutes) {
