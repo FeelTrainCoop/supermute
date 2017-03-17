@@ -1,5 +1,5 @@
 'use strict';
-var _ = require('underscore');
+var _ = require('lodash');
 var express = require('express'),
 	controllers = require(__dirname + '/lib/controllers'),
   Stream = require(__dirname + '/lib/classes/stream').Stream,
