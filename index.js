@@ -60,31 +60,34 @@ function unmute(id, supermute) {
   // get the stream object for our user
   let stream = app.get('streams').filter(stream => stream.userid === id)[0];
   if (stream.userdata !== undefined) {
-    let permanentMuteRecord = stream.userdata.supermutes.filter(mute => (mute.keyword === supermute.keyword) && !mute.isExpired)[0];
-    permanentMuteRecord.isExpired = true;
-    client.hset(`supermute-users`, id, JSON.stringify(stream.userdata), redis.print);
-    // user this user's individual stream and set off a delayed cascade of mutes
-    let count = 0;
-    const delayMillis = 2000;
-    // keep a running list of unmuted users. at the end we'll subtract these from the mutedUsers list
-    for (let mutedUser of supermute.mutedUsers) {
-      setTimeout(function() {
-        console.log('now unmuting', mutedUser);
-        stream.T.post('mutes/users/destroy', { screen_name: mutedUser }, (err) => {
-          // if there's no error, or if the error is we've already unmuted them, remove the user from the mute list in the database!
-          if (!err || +err.code === 272) {
-            // we unmuted!
-            console.log(`unmuted ${mutedUser} for ${id}!`);
-            // remove this user from the permanent record and then update the DB with the new userdata
-            permanentMuteRecord.mutedUsers.splice(permanentMuteRecord.mutedUsers.indexOf(mutedUser),1);
-            client.hset(`supermute-users`, id, JSON.stringify(stream.userdata), redis.print);
-          }
-          else {
-            console.log('err!',err);
-          }
-        });
-      }, delayMillis*count, mutedUser); // this sets up one mute every two seconds
-      count++;
+    const now = new Date();
+    let permanentMuteRecord = stream.userdata.supermutes.filter(mute => (mute.keyword === supermute.keyword) && (now > new Date(mute.expirationDate)) && !mute.isExpired)[0];
+    if (permanentMuteRecord) {
+      permanentMuteRecord.isExpired = true;
+      client.hset(`supermute-users`, id, JSON.stringify(stream.userdata), redis.print);
+      // user this user's individual stream and set off a delayed cascade of mutes
+      let count = 0;
+      const delayMillis = 2000;
+      // keep a running list of unmuted users. at the end we'll subtract these from the mutedUsers list
+      for (let mutedUser of supermute.mutedUsers) {
+        setTimeout(function() {
+          console.log('now unmuting', mutedUser);
+          stream.T.post('mutes/users/destroy', { screen_name: mutedUser }, (err) => {
+            // if there's no error, or if the error is we've already unmuted them, remove the user from the mute list in the database!
+            if (!err || +err.code === 272) {
+              // we unmuted!
+              console.log(`unmuted ${mutedUser} for ${id}!`);
+              // remove this user from the permanent record and then update the DB with the new userdata
+              permanentMuteRecord.mutedUsers.splice(permanentMuteRecord.mutedUsers.indexOf(mutedUser),1);
+              client.hset(`supermute-users`, id, JSON.stringify(stream.userdata), redis.print);
+            }
+            else {
+              console.log('err!',err);
+            }
+          });
+        }, delayMillis*count, mutedUser); // this sets up one mute every two seconds
+        count++;
+      }
     }
   }
 }
@@ -106,7 +109,7 @@ function updateExpirations() {
         for (var supermute of userdata.supermutes) {
           var d = new Date(supermute.expirationDate);
           if ((now > d)) {
-            //supermute.isExpired = true;
+            supermute.isExpired = true;
             unmute(id_str, supermute);
           }
         }
