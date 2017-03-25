@@ -50,7 +50,7 @@ You can also do this via the Heroku CLI toolbelt if you prefer!
 Now we add the `heroku-redis` addon. This provides a remote Redis database for Supermute to use. The following command adds the free "hobby" tier:
 
 ```
-$ heroku addons:create heroku-redis:hobby-dev
+$ heroku addons:create heroku-redis:hobby-dev --app YOURAPPNAME
 ```
 
 Next, we push all the code to our Heroku remote repository (and hence, deploy it on remote). Then we turn on our web dyno so the whole thing is running!
