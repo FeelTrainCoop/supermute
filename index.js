@@ -65,7 +65,7 @@ function unmute(id, supermute) {
     if (permanentMuteRecord) {
       permanentMuteRecord.isExpired = true;
       client.hset(`supermute-users`, id, JSON.stringify(stream.userdata), redis.print);
-      // user this user's individual stream and set off a delayed cascade of mutes
+      // use this user's individual stream and set off a delayed cascade of unmutes
       let count = 0;
       const delayMillis = 2000;
       // keep a running list of unmuted users. at the end we'll subtract these from the mutedUsers list
